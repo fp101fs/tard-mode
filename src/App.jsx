@@ -11,11 +11,11 @@ function App() {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleBreakDown = async (task, apiKey) => {
+  const handleBreakDown = async (task) => {
     setIsLoading(true);
     setError(null);
     try {
-      const generatedSteps = await breakDownTask(task, apiKey);
+      const generatedSteps = await breakDownTask(task);
       setSteps(generatedSteps);
     } catch (err) {
       setError(err.message);

@@ -1,8 +1,9 @@
 export const breakDownTask = async (task, apiKey) => {
-  if (!apiKey) throw new Error("API Key is missing");
+  const key = apiKey || import.meta.env.VITE_GEMINI_API_KEY;
+  if (!key) throw new Error("Gemini API Key is missing. Please set VITE_GEMINI_API_KEY in your environment.");
   if (!task) throw new Error("Task is missing");
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
 
   const response = await fetch(url, {
     method: 'POST',
