@@ -30,8 +30,8 @@ export const breakDownTask = async (task, apiKey) => {
 
   if (!rawText) return [];
 
-  return rawText.split('
-')
+  // Split by newline characters
+  return rawText.split(/\n+/)
     .map(t => t.trim())
-    .filter(t => t !== '' && !t.match(/^\d+\./) && !t.startsWith('-')); // Cleanup just in case
+    .filter(t => t !== '' && !t.match(/^\d+\./) && !t.startsWith('-'));
 };
