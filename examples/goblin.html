@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Focus Magic Todo</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f9f9fb; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        input, button { padding: 12px; font-size: 16px; width: 100%; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { background-color: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .subtask { background: #fff; border-left: 4px solid #1a73e8; margin: 8px 0; padding: 12px; border-radius: 4px; list-style: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        /* Focus Mode Overlay */
+        #focusOverlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: white; z-index: 100; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px; box-sizing: border-box;
+        }
+        #focusText { font-size: 4rem; font-weight: bold; margin-bottom: 40px; color: #222; }
+        #nextBtn { width: auto; padding: 20px 50px; font-size: 1.5rem; background: #34a853; }
+        #closeBtn { position: absolute; top: 20px; right: 20px; background: none; color: #666; width: auto; border: none; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+    <div id="mainView" class="card">
+        <h2>✨ Gemini Focus Todo</h2>
+        <input type="password" id="apiKey" placeholder="Paste Gemini API Key here">
+        <input type="text" id="taskInput" placeholder="What task should I break down?">
+        <button onclick="breakItDown()">Break it down</button>
+
+        <div id="loading" style="display:none; text-align:center;">Consulting the stars...</div>
+        <ul id="taskList" style="padding: 0;"></ul>
+        <button id="startFocus" style="display:none; background-color: #8ab4f8;" onclick="startFocus()">🚀 Start Focus Mode</button>
+    </div>
+
+    <div id="focusOverlay">
+        <button id="closeBtn" onclick="stopFocus()">✕ Exit</button>
+        <div id="focusText">Step text goes here</div>
+        <button id="nextBtn" onclick="nextStep()">Next Step →</button>
+    </div>
+
+    <script>
+        let subtasks = [];
+        let currentIndex = 0;
+
+        async function breakItDown() {
+            const apiKey = document.getElementById('apiKey').value;
+            const task = document.getElementById('taskInput').value;
+            const list = document.getElementById('taskList');
+            const loading = document.getElementById('loading');
+            const startBtn = document.getElementById('startFocus');
+
+            if (!apiKey || !task) return alert("Missing info!");
+
+            list.innerHTML = '';
+            loading.style.display = 'block';
+            startBtn.style.display = 'none';
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Break down "${task}" into simple actionable steps. List only. No numbers.` }] }]
+                    })
+                });
+
+                const data = await response.json();
+                const rawText = data.candidates[0].content.parts[0].text;
+                subtasks = rawText.split('\n').filter(t => t.trim() !== '');
+
+                loading.style.display = 'none';
+                startBtn.style.display = 'block';
+                
+                subtasks.forEach(step => {
+                    const li = document.createElement('li');
+                    li.className = 'subtask';
+                    li.innerText = step;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                alert("Error! Check console.");
+                loading.style.display = 'none';
+            }
+        }
+
+        // Focus Mode Logic
+        function startFocus() {
+            currentIndex = 0;
+            document.getElementById('focusOverlay').style.display = 'flex';
+            updateFocusDisplay();
+        }
+
+        function stopFocus() {
+            document.getElementById('focusOverlay').style.display = 'none';
+        }
+
+        function nextStep() {
+            currentIndex++;
+            if (currentIndex < subtasks.length) {
+                updateFocusDisplay();
+            } else {
+                alert("All done! Great job!");
+                stopFocus();
+            }
+        }
+
+        function updateFocusDisplay() {
+            document.getElementById('focusText').innerText = subtasks[currentIndex];
+            const btn = document.getElementById('nextBtn');
+            btn.innerText = (currentIndex === subtasks.length - 1) ? "Finish Task! 🎉" : "Next Step →";
+        }
+    </script>
+</body>
+</html>
